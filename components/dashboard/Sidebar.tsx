@@ -97,7 +97,7 @@ export default function Sidebar({
                         <div className="space-y-1"   >
                             <NavItem
 
-                          href="#"
+                          href="/sales"
                           icon={<ShoppingCart size={19}/>}
                           label="Sales"
                           onClick={onClose}
@@ -105,21 +105,21 @@ export default function Sidebar({
 
 
                           <NavItem
-                         href="#"
+                         href="/transactions"
                          icon={<ArrowLeftRight size={19}/>}
                          label="Transactions"
                          onClick={onClose}
                          />
                           
                            <NavItem
-                         href="#"
+                         href="/products"
                          icon={<Package size={19}/>}
                          label="Products"
                          onClick={onClose}
                          />
 
                           <NavItem
-                         href="#"
+                         href="/customers"
                          icon={<Users size={19}/>}
                          label="Customers"
                          onClick={onClose}
@@ -134,7 +134,7 @@ export default function Sidebar({
                                 System
                             </p>
                              <NavItem
-                         href="#"
+                         href="/settings"
                          icon={<Settings size={19}/>}
                          label="Settings"
                          onClick={onClose}

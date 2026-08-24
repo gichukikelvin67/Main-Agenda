@@ -1,142 +1,133 @@
 "use client";
 
-import{useState} from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-import Link from "next/link";
+export default function LoginPage() {
+  const router = useRouter();
 
-import { Wallet,Mail,Lock,ArrowRight } from "lucide-react";
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-export default function LoginPage(){
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    const[email,setEmail]=useState("");
-    const[password,setPassword]=useState("");
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
 
+    setLoading(true);
+    setError("");
 
-    function handleLogin(e:React.FormEvent){
-        e.preventDefault();
-
-        if(!email || !password){
-
-            alert("Please enter your email and password");
-            return;
-
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
         }
+      );
 
-        alert("Login successful!");
-        window.location.href="/dashboard";
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Login failed");
+        return;
+      }
+
+      // Save JWT
+      localStorage.setItem("token", data.token);
+
+      // Save user
+      localStorage.setItem(
+        "user",
+        JSON.stringify(data.user)
+      );
+
+      // Go to dashboard
+      router.push("/dashboard");
+
+    } catch (error) {
+      console.error(error);
+      setError("Unable to connect to the server.");
+    } finally {
+      setLoading(false);
     }
+  }
 
-    return(
-        <main className="min-h-screen bg-[#f7faf8] flex items-center justify-center px-6">
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
 
-            <div className="w-full max-w-md">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
 
-<div className="mb-8 text-center">
-                <Link
+        <h1 className="text-2xl font-bold text-slate-900">
+          M-Pesa POS
+        </h1>
 
-                href="/"
+        <p className="mt-2 text-sm text-slate-500">
+          Login to your business account
+        </p>
 
-                className="inline-flex items-center gap-3">
+        {error && (
+          <div className="mt-5 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
 
-                    <div className="flex h-12 items-center justify-center rounded-xl bg-emerald-600 text-white">
-                        <Wallet size={24}/>
+        <form
+          onSubmit={handleLogin}
+          className="mt-6 space-y-5"
+        >
 
-                    </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Email
+            </label>
 
-                    <div className="text-left">
-                        <h1 className="text-xl font-bold text-slate-950">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="kelvin@example.com"
+              required
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500"
+            />
+          </div>
 
-                            M-Pesa<span className="text-emerald-600">POS</span>
-                        </h1>
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Password
+            </label>
 
-                        <p className="text-[10px] uppercase tracking-widest text-slate-400">
-                            Business Payments
-                        </p>
-                    </div>
-                </Link>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              placeholder="••••••••"
+              required
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-emerald-500"
+            />
+          </div>
 
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700 disabled:bg-slate-400"
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
 
-            </div>
+        </form>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
-                <div className="mb-7">
-                    <h2 className="text-2xl font-bold text-slate-950">
-                        Welcome back
-                    </h2>
+      </div>
 
-                    <p className="mt-2 text-sm text-slate-500">
-
-                        Login to manage your business
-                    </p>
-                </div>
-
-                <form onSubmit={handleLogin} className="space-y-5">
-
-                    <div>
-                        <label className="mb-2 block text-sm font-semibold text-slate-700">
-                            Email
-                        </label>
-
-                        <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3">
-
-                            <Mail size={18} className="text-slate-400"/>
-
-                            <input
-
-                            type="email"
-                            placeholder="business@example.com"
-                            value={email}
-                            onChange={(e)=> setEmail(e.target.value)}
-                            className="w-full bg-transparent text-sm outline-none"
-                            />
-
-                        </div>
-                    </div>
-
-                    <div>
-
-                        <label className="mb-2 block text-sm font-semibold text-slate-700">
-                            Password
-                        </label>
-
-                        <div className="flex h-12 items-center gap-3 rounded-xl border border-slate-200  bg-white px-4 py-3">
-                            <Lock size={18} className=" shrink-0 text-slate-400"/>
-
-                             <input
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className=" h-full w-full bg-transparent text-sm  text-slate-900 outline-none"
-                />
-                        </div>
-                    </div>
-
-                    <button
-                    type="submit"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 font-semibold text-white transition hover:bg-emerald-700">
-                        Login
-                        <ArrowRight size={18}/>
-
-                    </button>
-                </form>
-
-                 <p className="mt-6 text-center text-sm text-slate-500">
-
-            Don't have an account?{" "}
-
-            <Link
-              href="/register"
-              className="font-semibold text-emerald-600 hover:text-emerald-700"
-            >
-              Create account
-            </Link>
-
-          </p>
-
-        </div>
-
-            </div>
-        </main>
-    );
+    </div>
+  );
 }

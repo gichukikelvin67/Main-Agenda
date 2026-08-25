@@ -17,7 +17,7 @@ export default function ProductGrid({
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {products.map((product)=>(
                 <ProductCard
-                key={product.id}
+                key={product._id}
                 product={product}
                 onAdd={onAdd}
                 />

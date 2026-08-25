@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect ,useState } from "react";
 
 import Sidebar from "@/components/dashboard/Sidebar";
 import Topbar from "@/components/dashboard/Topbar";
@@ -14,61 +14,41 @@ import PaymentSummary from "@/components/pos/PaymentSummary";
 import { Product } from "@/components/pos/ProductCard";
 import { CartProduct } from "@/components/pos/CartItem";
 
-const products: Product[] = [
-  {
-    id: 1,
-    name: "Premium Coffee",
-    category: "Beverages",
-    price: 350,
-    stock: 24,
-    icon: "☕",
-  },
-  {
-    id: 2,
-    name: "Mineral Water",
-    category: "Beverages",
-    price: 80,
-    stock: 50,
-    icon: "💧",
-  },
-  {
-    id: 3,
-    name: "Fresh Juice",
-    category: "Beverages",
-    price: 250,
-    stock: 18,
-    icon: "🧃",
-  },
-  {
-    id: 4,
-    name: "Chicken Sandwich",
-    category: "Food",
-    price: 450,
-    stock: 12,
-    icon: "🥪",
-  },
-  {
-    id: 5,
-    name: "Beef Burger",
-    category: "Food",
-    price: 650,
-    stock: 10,
-    icon: "🍔",
-  },
-  {
-    id: 6,
-    name: "French Fries",
-    category: "Food",
-    price: 250,
-    stock: 30,
-    icon: "🍟",
-  },
-];
+
 
 export default function SalesPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [cart, setCart] = useState<CartProduct[]>([]);
+  const[products,setProducts]=useState<Product[]>([]);
+  const[loading, setLoading]=useState(true);
+
+
+  //backend connection
+
+  useEffect(()=>{
+    async function fetchProducts(){
+      try{
+        const response=await fetch(
+          "http://localhost:5000/api/products"
+        )
+        if(!response.ok){
+          throw new Error("Failed to fetch products");
+        }
+        const data=await response.json();
+        setProducts(data);
+
+      }catch(error){
+        console.error("Error fetching products:",error);
+
+      }finally{
+        setLoading(false);
+
+      }
+    }
+    fetchProducts();
+  }, []);
+
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
@@ -83,13 +63,13 @@ export default function SalesPage() {
 
   function addToCart(product: Product) {
     const existingProduct = cart.find(
-      (item) => item.id === product.id
+      (item) => item._id === product._id
     );
 
     if (existingProduct) {
       setCart(
         cart.map((item) =>
-          item.id === product.id
+          item._id === product._id
             ? {
                 ...item,
                 quantity: item.quantity + 1,
@@ -108,10 +88,10 @@ export default function SalesPage() {
     }
   }
 
-  function increaseQuantity(id: number) {
+  function increaseQuantity(id: string) {
     setCart(
       cart.map((item) =>
-        item.id === id
+        item._id === id
           ? {
               ...item,
               quantity: item.quantity + 1,
@@ -121,11 +101,11 @@ export default function SalesPage() {
     );
   }
 
-  function decreaseQuantity(id: number) {
+  function decreaseQuantity(id: string) {
     setCart(
       cart
         .map((item) =>
-          item.id === id
+          item._id === id
             ? {
                 ...item,
                 quantity: item.quantity - 1,
@@ -136,9 +116,9 @@ export default function SalesPage() {
     );
   }
 
-  function removeFromCart(id: number) {
+  function removeFromCart(id: string) {
     setCart(
-      cart.filter((item) => item.id !== id)
+      cart.filter((item) => item._id !== id)
     );
   }
 
@@ -233,6 +213,7 @@ export default function SalesPage() {
               <CustomerSelector />
 
               <PaymentSummary
+              items={cart}
                 subtotal={subtotal}
                 tax={tax}
                 total={total}

@@ -15,9 +15,9 @@ export type CartProduct=Product & {
 
 type CartItemProps={
     item:CartProduct;
-    onIncrease:(id:number)=>void;
-    onDecrease:(id:number)=> void;
-    onRemove:(id:number)=>void;
+    onIncrease:(id: string)=>void;
+    onDecrease:(id:string)=> void;
+    onRemove:(id:string)=>void;
 };
 
 export default function CartItem({
@@ -45,7 +45,7 @@ export default function CartItem({
                     </div>
 
                     <button
-                    onClick={()=>onRemove(item.id)}
+                    onClick={()=>onRemove(item._id)}
                     className="text-slate-300 transition hover:text-red-500">
 
                         <Trash2 size={16}/>
@@ -55,7 +55,7 @@ export default function CartItem({
                 <div className="mt-3 flex items-center justify-between">
                     <div className="flex items-center rounded-lg border border-slate-200">
                         <button
-                        onClick={()=>onDecrease(item.id)}
+                        onClick={()=>onDecrease(item._id)}
                         className="p-1.5 text-slate-500 hover:bg-slate-50">
                             <Minus size={14}/>
 
@@ -67,7 +67,7 @@ export default function CartItem({
 
                         <button
 
-                        onClick={()=>onIncrease(item.id)}
+                        onClick={()=>onIncrease(item._id)}
                         className="p-1.5 text-slate-500 hover:bg-slate-50">
                             <Plus size={14}/>
 

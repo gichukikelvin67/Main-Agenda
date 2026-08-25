@@ -4,9 +4,9 @@ import CartItem, {CartProduct} from "./CartItem";
 
 type CartProps={
     items: CartProduct[];
-    onIncrease: (id:number)=> void;
-    onDecrease:(id:number)=> void;
-    onRemove:(id:number)=> void;
+    onIncrease: (id:string)=> void;
+    onDecrease:(id:string)=> void;
+    onRemove:(id:string)=> void;
 };
 
 export default function Cart({
@@ -53,7 +53,7 @@ export default function Cart({
             ):(
                 items.map((item)=>(
                     <CartItem
-                    key={item.id}
+                    key={item._id}
                     item={item}
                     onIncrease={onIncrease}
                     onDecrease={onDecrease}

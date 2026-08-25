@@ -1,4 +1,5 @@
 "use client";
+import { CartProduct } from "./CartItem";
 import{
     Smartphone,
     ArrowRight,
@@ -9,6 +10,7 @@ type PaymentSummaryProps={
     subtotal:number;
     tax:number;
     total:number;
+    items:CartProduct[];
 
 };
 
@@ -16,7 +18,65 @@ export default function PaymentSummary({
     subtotal,
     tax,
     total,
+    items,
 }:PaymentSummaryProps){
+
+    async function createOrder(){
+        if(items.length ===0){
+            alert("Your cart is empty.");
+            return;
+        }
+
+        const token=localStorage.getItem("token");
+
+        if (!token){
+            alert("Please login first.");
+            return;
+        }
+
+       try {
+const response=await fetch(
+    "http://localhost:5000/api/orders",
+    {
+        method:"POST",
+
+        headers:{
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+
+        body:JSON.stringify({
+            items: items.map((item)=>({
+                product:item._id,
+                name: item.name,
+                price:item.price,
+                quantity: item.quantity,
+            })),
+
+            subtotal,
+            tax,
+            total,
+            paymentMethod:"mpesa",
+        })
+    }
+);
+const data= await response.json();
+if(!response.ok){
+    throw new Error(
+        data.message || "Failed to create order"
+    )
+}
+console.log("Order created:", data);
+alert("Order created successfully!");
+
+        }catch(error){
+            console.error("Created order error:",error);
+
+            alert("Failed to create order.")
+        }
+    }
+
+
     return(
         <div className="rounded-2xl  border border-slate-200 bg-white p-5 shadow-sm">
 
@@ -78,7 +138,9 @@ export default function PaymentSummary({
             </div>
 
             <button 
-            disabled={total===0}
+            onClick={createOrder}
+            disabled={total ===0}
+            
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none">
                 Request M-Pesa Payment
                 <ArrowRight size={18}/>

@@ -1,91 +1,206 @@
+
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Topbar from "@/components/dashboard/Topbar";
-import { Search, Plus, Package, Trash2, X } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Package,
+  Trash2,
+  X,
+  Pencil,
+} from "lucide-react";
 
 type Product = {
-  id: number;
+  _id: string;
   name: string;
   category: string;
   price: number;
   stock: number;
+  icon?: string;
 };
 
-const initialProducts: Product[] = [
-  {
-    id: 1,
-    name: "Premium Coffee",
-    category: "Beverages",
-    price: 350,
-    stock: 24,
-  },
-  {
-    id: 2,
-    name: "Mineral Water",
-    category: "Beverages",
-    price: 80,
-    stock: 50,
-  },
-  {
-    id: 3,
-    name: "Fresh Juice",
-    category: "Beverages",
-    price: 250,
-    stock: 18,
-  },
-  {
-    id: 4,
-    name: "Chicken Sandwich",
-    category: "Food",
-    price: 450,
-    stock: 12,
-  },
-];
-
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
 
   const [search, setSearch] = useState("");
-
   const [showForm, setShowForm] = useState(false);
+
+  const [editingProduct, setEditingProduct] =
+    useState<Product | null>(null);
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Beverages");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
 
+  // GET PRODUCTS
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/products"
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch products");
+        }
+
+        const data = await response.json();
+        setProducts(data);
+
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
+    product.name
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
 
-  function addProduct() {
+  // ADD PRODUCT
+  async function addProduct() {
     if (!name || !price || !stock) {
       alert("Please fill in all fields.");
       return;
     }
 
-    const newProduct: Product = {
-      id: Date.now(),
-      name,
-      category,
-      price: Number(price),
-      stock: Number(stock),
-    };
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/products",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
 
-    setProducts([...products, newProduct]);
+          body: JSON.stringify({
+            name,
+            category,
+            price: Number(price),
+            stock: Number(stock),
+            icon: "📦",
+          }),
+        }
+      );
 
-    setName("");
-    setPrice("");
-    setStock("");
-    setCategory("Beverages");
+      const data = await response.json();
 
-    setShowForm(false);
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to create product"
+        );
+      }
+
+      setProducts((currentProducts) => [
+        ...currentProducts,
+        data.product,
+      ]);
+
+      setName("");
+      setPrice("");
+      setStock("");
+      setCategory("Beverages");
+      setShowForm(false);
+
+    } catch (error) {
+      console.error("Error adding product:", error);
+      alert("Failed to add product.");
+    }
   }
 
-  function deleteProduct(id: number) {
-    setProducts(products.filter((product) => product.id !== id));
+  // UPDATE PRODUCT
+  async function updateProduct() {
+    if (!editingProduct) return;
+
+    if (
+      !editingProduct.name ||
+      !editingProduct.price ||
+      !editingProduct.stock
+    ) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/products/${editingProduct._id}`,
+        {
+          method: "PUT",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            name: editingProduct.name,
+            category: editingProduct.category,
+            price: Number(editingProduct.price),
+            stock: Number(editingProduct.stock),
+            icon: editingProduct.icon || "📦",
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to update product"
+        );
+      }
+
+      setProducts((currentProducts) =>
+        currentProducts.map((product) =>
+          product._id === editingProduct._id
+            ? data.product
+            : product
+        )
+      );
+
+      setEditingProduct(null);
+
+    } catch (error) {
+      console.error("Error updating product:", error);
+      alert("Failed to update product.");
+    }
+  }
+
+  // DELETE PRODUCT
+  async function deleteProduct(id: string) {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/products/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to delete product"
+        );
+      }
+
+      setProducts((currentProducts) =>
+        currentProducts.filter(
+          (product) => product._id !== id
+        )
+      );
+
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert("Failed to delete product.");
+    }
   }
 
   return (
@@ -99,10 +214,12 @@ export default function ProductsPage() {
 
         <div className="p-6 lg:p-8">
 
-          {/* Header */}
+          {/* HEADER */}
+
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
             <div>
+
               <p className="text-sm font-bold uppercase tracking-widest text-emerald-600">
                 Business
               </p>
@@ -114,6 +231,7 @@ export default function ProductsPage() {
               <p className="mt-2 text-sm text-slate-500">
                 Manage your products and stock.
               </p>
+
             </div>
 
             <button
@@ -126,28 +244,35 @@ export default function ProductsPage() {
 
           </div>
 
-          {/* Search */}
+          {/* SEARCH */}
+
           <div className="mt-6 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
 
-            <Search size={18} className="text-slate-400" />
+            <Search
+              size={18}
+              className="text-slate-400"
+            />
 
             <input
               type="text"
               placeholder="Search products..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
               className="w-full bg-transparent text-sm outline-none"
             />
 
           </div>
 
-          {/* Products */}
+          {/* PRODUCTS */}
+
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
             {filteredProducts.map((product) => (
 
               <div
-                key={product.id}
+                key={product._id}
                 className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
               >
 
@@ -157,12 +282,29 @@ export default function ProductsPage() {
                     <Package size={22} />
                   </div>
 
-                  <button
-                    onClick={() => deleteProduct(product.id)}
-                    className="rounded-lg p-2 text-slate-300 hover:bg-red-50 hover:text-red-500"
-                  >
-                    <Trash2 size={17} />
-                  </button>
+                  {/* EDIT + DELETE */}
+
+                  <div className="flex gap-1">
+
+                    <button
+                      onClick={() =>
+                        setEditingProduct(product)
+                      }
+                      className="rounded-lg p-2 text-slate-300 hover:bg-emerald-50 hover:text-emerald-600"
+                    >
+                      <Pencil size={17} />
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        deleteProduct(product._id)
+                      }
+                      className="rounded-lg p-2 text-slate-300 hover:bg-red-50 hover:text-red-500"
+                    >
+                      <Trash2 size={17} />
+                    </button>
+
+                  </div>
 
                 </div>
 
@@ -177,13 +319,16 @@ export default function ProductsPage() {
                 <div className="mt-4 flex items-end justify-between">
 
                   <div>
+
                     <p className="text-xl font-bold text-slate-950">
-                      KSh {product.price.toLocaleString()}
+                      KSh{" "}
+                      {product.price.toLocaleString()}
                     </p>
 
                     <p className="mt-1 text-xs text-slate-400">
                       {product.stock} in stock
                     </p>
+
                   </div>
 
                   <span
@@ -193,7 +338,9 @@ export default function ProductsPage() {
                         : "bg-yellow-50 text-yellow-700"
                     }`}
                   >
-                    {product.stock > 10 ? "In Stock" : "Low Stock"}
+                    {product.stock > 10
+                      ? "In Stock"
+                      : "Low Stock"}
                   </span>
 
                 </div>
@@ -204,23 +351,33 @@ export default function ProductsPage() {
 
           </div>
 
-          {/* Empty */}
+          {/* EMPTY */}
+
           {filteredProducts.length === 0 && (
+
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-10 text-center">
-              <Package className="mx-auto text-slate-300" size={40} />
+
+              <Package
+                className="mx-auto text-slate-300"
+                size={40}
+              />
 
               <p className="mt-3 font-semibold text-slate-700">
                 No products found
               </p>
+
             </div>
+
           )}
 
         </div>
 
       </main>
 
-      {/* Add Product Modal */}
+      {/* ADD PRODUCT MODAL */}
+
       {showForm && (
+
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
 
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
@@ -228,6 +385,7 @@ export default function ProductsPage() {
             <div className="flex items-center justify-between">
 
               <div>
+
                 <h2 className="text-xl font-bold text-slate-950">
                   Add Product
                 </h2>
@@ -235,10 +393,13 @@ export default function ProductsPage() {
                 <p className="mt-1 text-sm text-slate-400">
                   Add a new product to your business.
                 </p>
+
               </div>
 
               <button
-                onClick={() => setShowForm(false)}
+                onClick={() =>
+                  setShowForm(false)
+                }
                 className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
               >
                 <X size={20} />
@@ -252,13 +413,17 @@ export default function ProductsPage() {
                 type="text"
                 placeholder="Product name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) =>
+                  setName(e.target.value)
+                }
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
               />
 
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) =>
+                  setCategory(e.target.value)
+                }
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
               >
                 <option>Beverages</option>
@@ -271,7 +436,9 @@ export default function ProductsPage() {
                 type="number"
                 placeholder="Price (KSh)"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e) =>
+                  setPrice(e.target.value)
+                }
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
               />
 
@@ -279,7 +446,9 @@ export default function ProductsPage() {
                 type="number"
                 placeholder="Stock"
                 value={stock}
-                onChange={(e) => setStock(e.target.value)}
+                onChange={(e) =>
+                  setStock(e.target.value)
+                }
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
               />
 
@@ -295,8 +464,115 @@ export default function ProductsPage() {
           </div>
 
         </div>
+
+      )}
+
+      {/* EDIT PRODUCT MODAL */}
+
+      {editingProduct && (
+
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
+
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+            <div className="flex items-center justify-between">
+
+              <div>
+
+                <h2 className="text-xl font-bold text-slate-950">
+                  Edit Product
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-400">
+                  Update your product information.
+                </p>
+
+              </div>
+
+              <button
+                onClick={() =>
+                  setEditingProduct(null)
+                }
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+              >
+                <X size={20} />
+              </button>
+
+            </div>
+
+            <div className="mt-6 space-y-4">
+
+              <input
+                type="text"
+                placeholder="Product name"
+                value={editingProduct.name}
+                onChange={(e) =>
+                  setEditingProduct({
+                    ...editingProduct,
+                    name: e.target.value,
+                  })
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
+              />
+
+              <select
+                value={editingProduct.category}
+                onChange={(e) =>
+                  setEditingProduct({
+                    ...editingProduct,
+                    category: e.target.value,
+                  })
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
+              >
+                <option>Beverages</option>
+                <option>Food</option>
+                <option>Desserts</option>
+                <option>Other</option>
+              </select>
+
+              <input
+                type="number"
+                placeholder="Price"
+                value={editingProduct.price}
+                onChange={(e) =>
+                  setEditingProduct({
+                    ...editingProduct,
+                    price: Number(e.target.value),
+                  })
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
+              />
+
+              <input
+                type="number"
+                placeholder="Stock"
+                value={editingProduct.stock}
+                onChange={(e) =>
+                  setEditingProduct({
+                    ...editingProduct,
+                    stock: Number(e.target.value),
+                  })
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
+              />
+
+              <button
+                onClick={updateProduct}
+                className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700"
+              >
+                Save Changes
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
       )}
 
     </div>
   );
 }
+

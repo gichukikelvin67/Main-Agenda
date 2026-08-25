@@ -1,9 +1,12 @@
+ import ProtectedRoute from "@/components/auth/ProtectedRoute";
+ 
  import QuickActions from "@/components/dashboard/QuickActions";
 import Sidebar from "@/components/dashboard/Sidebar"
 import StatCard from "@/components/dashboard/StatCard";
  import Topbar from "@/components/dashboard/Topbar";
  import SalesChart from "@/components/dashboard/SalesChart";
  import RecentTransactions from "@/components/dashboard/RecentTransactions";
+ 
 
 
 
@@ -14,11 +17,13 @@ import{
     Users,
     
 }from "lucide-react"
-import { StaticPrefetchDisabled } from "next/dist/shared/lib/app-router-types";
+
 
 export default function Dashboard(){
     return(
-        <div className="flex min-screen bg-[#f7faf8]">
+   <ProtectedRoute>
+        
+        <div className="flex min-h-screen bg-[#f7faf8]">
             <Sidebar/>
 
             <main className="min-w-0 flex-1">
@@ -99,5 +104,6 @@ export default function Dashboard(){
 
 
         </div>
+        </ProtectedRoute>
     );
 }

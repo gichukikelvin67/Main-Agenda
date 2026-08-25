@@ -2,12 +2,12 @@
 import { Plus } from "lucide-react";
 
 export type Product={
-id:number;
+_id:string;
 name: string;
 category:string;
 price:number;
 stock:number;
-icon:string;
+icon?:string;
 };
 
 type ProductCardProps={

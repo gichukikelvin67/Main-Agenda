@@ -1,5 +1,9 @@
+ "use client";
+ import { useEffect, useState } from "react";
+
  import ProtectedRoute from "@/components/auth/ProtectedRoute";
- 
+
+
  import QuickActions from "@/components/dashboard/QuickActions";
 import Sidebar from "@/components/dashboard/Sidebar"
 import StatCard from "@/components/dashboard/StatCard";
@@ -19,7 +23,41 @@ import{
 }from "lucide-react"
 
 
+
 export default function Dashboard(){
+
+const[stats, setStats]=useState({
+    earnings:0,
+    sales:0,
+    mpesaAmount:0,
+    mpesaTransactions:0,
+});
+const[loading ,setLoading]= useState(true);
+
+useEffect(()=>{
+    async function fetchStats(){
+        try{
+            const response=await fetch(
+                "http://localhost:5000/api/dashboard/today"
+            )
+            if(!response.ok){
+                throw new Error("Failed to fetch dashboard stats");
+            }
+            const data=await response.json();
+            setStats(data);
+
+        }catch(error){
+            console.error("Failed to fetch dashboard stats:",error);
+        }finally{
+            setLoading(false);
+
+        }
+    }
+    fetchStats();
+},[]);
+
+
+
     return(
    <ProtectedRoute>
         
@@ -52,32 +90,49 @@ export default function Dashboard(){
     
     
     <StatCard
-    title="Total Revenue"
-    value="Ksh 84,250"
-    change="+12.8%"
+    title="Today's Earnings"
+    value={
+        loading
+        ? "Loading..."
+        :`KSh ${stats.earnings.toLocaleString()}`
+    }
+    change="Today"
     icon={<Wallet size={21}/>}
     />
 
     <StatCard
 
     title="M-pesa Payments"
-    value="Ksh 62,400"
-    change="+8.4%"
+    value={
+        loading
+        ? "Loading..."
+        : `KSh ${stats.mpesaAmount.toLocaleString()}`
+    }
+    change="Today"
     icon={<Smartphone size={21}/>}
     />
 
     <StatCard
 
-    title="Transactions"
-    value="128"
-    change="+14.2%"
+    title="Today's Sales"
+    value={
+        loading
+        ?  "Loading..."
+        : stats.sales.toLocaleString()
+    }
+    change="Orders"
     icon={<CreditCard size={21}/>}
     />
 
     <StatCard
-    title="Customers"
-    value="86"
-    change="+6.7%"
+    title="M-Pesa Transactions"
+    value={
+        loading
+        ? "Loading..."
+
+        : stats.mpesaTransactions.toLocaleString()
+    }
+    change="Today"
     icon={<Users size={21}/>}
     />
 </div>

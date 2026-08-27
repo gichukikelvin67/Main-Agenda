@@ -2,8 +2,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import Sidebar from "@/components/dashboard/Sidebar";
 import Topbar from "@/components/dashboard/Topbar";
+
 import {
   Search,
   Plus,
@@ -12,6 +14,10 @@ import {
   X,
   Pencil,
 } from "lucide-react";
+
+// ==========================================
+// PRODUCT TYPE
+// ==========================================
 
 type Product = {
   _id: string;
@@ -22,24 +28,41 @@ type Product = {
   icon?: string;
 };
 
+// ==========================================
+// PRODUCTS PAGE
+// ==========================================
+
 export default function ProductsPage() {
+
+  // Products from MongoDB
   const [products, setProducts] = useState<Product[]>([]);
 
+  // Search
   const [search, setSearch] = useState("");
+
+  // Add product modal
   const [showForm, setShowForm] = useState(false);
 
+  // Product currently being edited
   const [editingProduct, setEditingProduct] =
     useState<Product | null>(null);
 
+  // Add product form
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("Beverages");
+  const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
 
-  // GET PRODUCTS
+  // ==========================================
+  // GET PRODUCTS FROM MONGODB
+  // ==========================================
+
   useEffect(() => {
+
     async function fetchProducts() {
+
       try {
+
         const response = await fetch(
           "http://localhost:5000/api/products"
         );
@@ -49,15 +72,27 @@ export default function ProductsPage() {
         }
 
         const data = await response.json();
+
         setProducts(data);
 
       } catch (error) {
-        console.error("Error fetching products:", error);
+
+        console.error(
+          "Error fetching products:",
+          error
+        );
+
       }
+
     }
 
     fetchProducts();
+
   }, []);
+
+  // ==========================================
+  // SEARCH PRODUCTS
+  // ==========================================
 
   const filteredProducts = products.filter((product) =>
     product.name
@@ -65,25 +100,40 @@ export default function ProductsPage() {
       .includes(search.toLowerCase())
   );
 
+  // ==========================================
   // ADD PRODUCT
+  // ==========================================
+
   async function addProduct() {
-    if (!name || !price || !stock) {
-      alert("Please fill in all fields.");
+
+    if (
+      !name.trim() ||
+      !category.trim() ||
+      !price ||
+      !stock
+    ) {
+
+      alert(
+        "Please enter product name, category, price and stock."
+      );
+
       return;
     }
 
     try {
+
       const response = await fetch(
         "http://localhost:5000/api/products",
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
 
           body: JSON.stringify({
-            name,
-            category,
+            name: name.trim(),
+            category: category.trim(),
             price: Number(price),
             stock: Number(stock),
             icon: "📦",
@@ -94,42 +144,72 @@ export default function ProductsPage() {
       const data = await response.json();
 
       if (!response.ok) {
+
         throw new Error(
-          data.message || "Failed to create product"
+          data.message ||
+          "Failed to create product"
         );
+
       }
 
+      // Add the new product to the screen
       setProducts((currentProducts) => [
         ...currentProducts,
         data.product,
       ]);
 
+      // Clear form
       setName("");
+      setCategory("");
       setPrice("");
       setStock("");
-      setCategory("Beverages");
+
+      // Close modal
       setShowForm(false);
 
     } catch (error) {
-      console.error("Error adding product:", error);
-      alert("Failed to add product.");
+
+      console.error(
+        "Error adding product:",
+        error
+      );
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to add product."
+      );
+
     }
+
   }
 
+  // ==========================================
   // UPDATE PRODUCT
+  // ==========================================
+
   async function updateProduct() {
-    if (!editingProduct) return;
+
+    if (!editingProduct) {
+      return;
+    }
 
     if (
-      !editingProduct.name ||
-      !editingProduct.price ||
-      !editingProduct.stock
+      !editingProduct.name.trim() ||
+      !editingProduct.category.trim() ||
+      editingProduct.price < 0 ||
+      editingProduct.stock < 0
     ) {
-      alert("Please fill in all fields.");
+
+      alert(
+        "Please enter a valid name, category, price and stock."
+      );
+
       return;
     }
 
     try {
+
       const response = await fetch(
         `http://localhost:5000/api/products/${editingProduct._id}`,
         {
@@ -140,8 +220,8 @@ export default function ProductsPage() {
           },
 
           body: JSON.stringify({
-            name: editingProduct.name,
-            category: editingProduct.category,
+            name: editingProduct.name.trim(),
+            category: editingProduct.category.trim(),
             price: Number(editingProduct.price),
             stock: Number(editingProduct.stock),
             icon: editingProduct.icon || "📦",
@@ -152,11 +232,15 @@ export default function ProductsPage() {
       const data = await response.json();
 
       if (!response.ok) {
+
         throw new Error(
-          data.message || "Failed to update product"
+          data.message ||
+          "Failed to update product"
         );
+
       }
 
+      // Update product in the screen
       setProducts((currentProducts) =>
         currentProducts.map((product) =>
           product._id === editingProduct._id
@@ -165,17 +249,42 @@ export default function ProductsPage() {
         )
       );
 
+      // Close edit modal
       setEditingProduct(null);
 
     } catch (error) {
-      console.error("Error updating product:", error);
-      alert("Failed to update product.");
+
+      console.error(
+        "Error updating product:",
+        error
+      );
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to update product."
+      );
+
     }
+
   }
 
+  // ==========================================
   // DELETE PRODUCT
+  // ==========================================
+
   async function deleteProduct(id: string) {
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
+
       const response = await fetch(
         `http://localhost:5000/api/products/${id}`,
         {
@@ -186,11 +295,15 @@ export default function ProductsPage() {
       const data = await response.json();
 
       if (!response.ok) {
+
         throw new Error(
-          data.message || "Failed to delete product"
+          data.message ||
+          "Failed to delete product"
         );
+
       }
 
+      // Remove product from screen
       setProducts((currentProducts) =>
         currentProducts.filter(
           (product) => product._id !== id
@@ -198,12 +311,28 @@ export default function ProductsPage() {
       );
 
     } catch (error) {
-      console.error("Error deleting product:", error);
-      alert("Failed to delete product.");
+
+      console.error(
+        "Error deleting product:",
+        error
+      );
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete product."
+      );
+
     }
+
   }
 
+  // ==========================================
+  // RETURN UI
+  // ==========================================
+
   return (
+
     <div className="flex min-h-screen bg-[#f7faf8]">
 
       <Sidebar />
@@ -214,7 +343,9 @@ export default function ProductsPage() {
 
         <div className="p-6 lg:p-8">
 
-          {/* HEADER */}
+          {/* ==================================
+              HEADER
+          ================================== */}
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
@@ -236,15 +367,20 @@ export default function ProductsPage() {
 
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+              className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
             >
+
               <Plus size={18} />
+
               Add Product
+
             </button>
 
           </div>
 
-          {/* SEARCH */}
+          {/* ==================================
+              SEARCH
+          ================================== */}
 
           <div className="mt-6 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
 
@@ -265,7 +401,9 @@ export default function ProductsPage() {
 
           </div>
 
-          {/* PRODUCTS */}
+          {/* ==================================
+              PRODUCTS
+          ================================== */}
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
@@ -276,10 +414,14 @@ export default function ProductsPage() {
                 className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
               >
 
+                {/* Top */}
+
                 <div className="flex items-center justify-between">
 
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+
                     <Package size={22} />
+
                   </div>
 
                   {/* EDIT + DELETE */}
@@ -290,43 +432,57 @@ export default function ProductsPage() {
                       onClick={() =>
                         setEditingProduct(product)
                       }
-                      className="rounded-lg p-2 text-slate-300 hover:bg-emerald-50 hover:text-emerald-600"
+                      className="rounded-lg p-2 text-slate-300 transition hover:bg-emerald-50 hover:text-emerald-600"
                     >
+
                       <Pencil size={17} />
+
                     </button>
 
                     <button
                       onClick={() =>
                         deleteProduct(product._id)
                       }
-                      className="rounded-lg p-2 text-slate-300 hover:bg-red-50 hover:text-red-500"
+                      className="rounded-lg p-2 text-slate-300 transition hover:bg-red-50 hover:text-red-500"
                     >
+
                       <Trash2 size={17} />
+
                     </button>
 
                   </div>
 
                 </div>
 
+                {/* Category */}
+
                 <p className="mt-4 text-xs font-medium text-emerald-600">
                   {product.category}
                 </p>
 
+                {/* Product name */}
+
                 <h2 className="mt-1 font-bold text-slate-900">
                   {product.name}
                 </h2>
+
+                {/* Price + Stock */}
 
                 <div className="mt-4 flex items-end justify-between">
 
                   <div>
 
                     <p className="text-xl font-bold text-slate-950">
+
                       KSh{" "}
                       {product.price.toLocaleString()}
+
                     </p>
 
                     <p className="mt-1 text-xs text-slate-400">
+
                       {product.stock} in stock
+
                     </p>
 
                   </div>
@@ -338,9 +494,11 @@ export default function ProductsPage() {
                         : "bg-yellow-50 text-yellow-700"
                     }`}
                   >
+
                     {product.stock > 10
                       ? "In Stock"
                       : "Low Stock"}
+
                   </span>
 
                 </div>
@@ -351,7 +509,9 @@ export default function ProductsPage() {
 
           </div>
 
-          {/* EMPTY */}
+          {/* ==================================
+              EMPTY STATE
+          ================================== */}
 
           {filteredProducts.length === 0 && (
 
@@ -374,13 +534,17 @@ export default function ProductsPage() {
 
       </main>
 
-      {/* ADD PRODUCT MODAL */}
+      {/* ======================================
+          ADD PRODUCT MODAL
+      ====================================== */}
 
       {showForm && (
 
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
 
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+            {/* Modal header */}
 
             <div className="flex items-center justify-between">
 
@@ -400,14 +564,20 @@ export default function ProductsPage() {
                 onClick={() =>
                   setShowForm(false)
                 }
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100"
               >
+
                 <X size={20} />
+
               </button>
 
             </div>
 
+            {/* Form */}
+
             <div className="mt-6 space-y-4">
+
+              {/* Product name */}
 
               <input
                 type="text"
@@ -416,47 +586,56 @@ export default function ProductsPage() {
                 onChange={(e) =>
                   setName(e.target.value)
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
               />
 
-              <select
+              {/* ANY CATEGORY */}
+
+              <input
+                type="text"
+                placeholder="Category e.g. Beverages, Electronics, Cosmetics"
                 value={category}
                 onChange={(e) =>
                   setCategory(e.target.value)
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
-              >
-                <option>Beverages</option>
-                <option>Food</option>
-                <option>Desserts</option>
-                <option>Other</option>
-              </select>
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
+              />
+
+              {/* Price */}
 
               <input
                 type="number"
                 placeholder="Price (KSh)"
                 value={price}
+                min="0"
                 onChange={(e) =>
                   setPrice(e.target.value)
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
               />
+
+              {/* Stock */}
 
               <input
                 type="number"
                 placeholder="Stock"
                 value={stock}
+                min="0"
                 onChange={(e) =>
                   setStock(e.target.value)
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
               />
+
+              {/* Add button */}
 
               <button
                 onClick={addProduct}
-                className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700"
+                className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700"
               >
+
                 Add Product
+
               </button>
 
             </div>
@@ -467,13 +646,17 @@ export default function ProductsPage() {
 
       )}
 
-      {/* EDIT PRODUCT MODAL */}
+      {/* ======================================
+          EDIT PRODUCT MODAL
+      ====================================== */}
 
       {editingProduct && (
 
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
 
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+            {/* Modal header */}
 
             <div className="flex items-center justify-between">
 
@@ -493,14 +676,20 @@ export default function ProductsPage() {
                 onClick={() =>
                   setEditingProduct(null)
                 }
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100"
               >
+
                 <X size={20} />
+
               </button>
 
             </div>
 
+            {/* Edit form */}
+
             <div className="mt-6 space-y-4">
+
+              {/* Product name */}
 
               <input
                 type="text"
@@ -512,10 +701,14 @@ export default function ProductsPage() {
                     name: e.target.value,
                   })
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
               />
 
-              <select
+              {/* ANY CATEGORY */}
+
+              <input
+                type="text"
+                placeholder="Category"
                 value={editingProduct.category}
                 onChange={(e) =>
                   setEditingProduct({
@@ -523,45 +716,50 @@ export default function ProductsPage() {
                     category: e.target.value,
                   })
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
-              >
-                <option>Beverages</option>
-                <option>Food</option>
-                <option>Desserts</option>
-                <option>Other</option>
-              </select>
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
+              />
+
+              {/* Price */}
 
               <input
                 type="number"
-                placeholder="Price"
+                placeholder="Price (KSh)"
                 value={editingProduct.price}
+                min="0"
                 onChange={(e) =>
                   setEditingProduct({
                     ...editingProduct,
                     price: Number(e.target.value),
                   })
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
               />
+
+              {/* Stock */}
 
               <input
                 type="number"
                 placeholder="Stock"
                 value={editingProduct.stock}
+                min="0"
                 onChange={(e) =>
                   setEditingProduct({
                     ...editingProduct,
                     stock: Number(e.target.value),
                   })
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
               />
+
+              {/* Save */}
 
               <button
                 onClick={updateProduct}
-                className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700"
+                className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700"
               >
+
                 Save Changes
+
               </button>
 
             </div>

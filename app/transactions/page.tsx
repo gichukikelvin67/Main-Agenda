@@ -63,7 +63,7 @@ export default function TransactionsPage() {
       const token = getToken();
 
       const response = await fetch(
-        "http://localhost:5000/api/orders",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

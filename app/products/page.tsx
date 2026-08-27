@@ -64,7 +64,7 @@ export default function ProductsPage() {
       try {
 
         const response = await fetch(
-          "http://localhost:5000/api/products"
+          `${process.env.NEXT_PUBLIC_API_URL}/api/products`,
         );
 
         if (!response.ok) {
@@ -123,7 +123,7 @@ export default function ProductsPage() {
     try {
 
       const response = await fetch(
-        "http://localhost:5000/api/products",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products`,
         {
           method: "POST",
 
@@ -211,7 +211,7 @@ export default function ProductsPage() {
     try {
 
       const response = await fetch(
-        `http://localhost:5000/api/products/${editingProduct._id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/${editingProduct._id}`,
         {
           method: "PUT",
 
@@ -286,7 +286,7 @@ export default function ProductsPage() {
     try {
 
       const response = await fetch(
-        `http://localhost:5000/api/products/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`,
         {
           method: "DELETE",
         }

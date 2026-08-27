@@ -197,7 +197,7 @@ if (!normalizedPhone) {
        */
 
       const orderResponse = await fetch(
-        "http://localhost:5000/api/orders",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/orders`,
         {
           method: "POST",
 
@@ -252,7 +252,7 @@ if (!normalizedPhone) {
        */
 
       const mpesaResponse = await fetch(
-        "http://localhost:5000/api/mpesa/stkpush",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/mpesa/stkpush`,
         {
           method: "POST",
 

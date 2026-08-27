@@ -80,7 +80,7 @@ export default function LoginPage() {
       
 
       const response = await fetch(
-        "http://localhost:5000/api/auth/login",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
         {
           // We are sending data to the backend
           method: "POST",

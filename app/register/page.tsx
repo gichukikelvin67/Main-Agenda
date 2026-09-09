@@ -6,6 +6,7 @@ import {
   Wallet,
   User,
   Mail,
+  Phone,
   Lock,
   ArrowRight,
   Eye,
@@ -15,9 +16,12 @@ import {
 } from "lucide-react";
 
 export default function RegisterPage() {
+  const[CompanyName, setCompanyName]=useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone]=useState("");
+  const[confirmPassword,setConfirmPassword]=useState("");
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -35,19 +39,24 @@ export default function RegisterPage() {
     setSuccess("");
 
     // Basic validation
-    if (!name.trim() || !email.trim() || !password) {
+    if (!name.trim() || !email.trim() || !phone.trim() ||  !password || !confirmPassword) {
       setError("Please fill in all fields.");
       return;
     }
 
-    if (password.length < 6) {
-      setError(
-        "Password must be at least 6 characters."
-      );
+    if(password !==confirmPassword){
+      setError("Password do not match.")
+      return;
+    }
+
+    const strongPassword=/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!strongPassword.test(password)) {
+      setError("Password must contain at least 8 characters, one uppercase, one lowercase, one number, and one special character.");
       return;
     }
 
     setLoading(true);
+
 
     try {
       const response = await fetch(
@@ -60,9 +69,12 @@ export default function RegisterPage() {
           },
 
           body: JSON.stringify({
+             CompanyName: CompanyName.trim(),
             name: name.trim(),
             email: email.trim().toLowerCase(),
+            phone:phone.trim(),
             password,
+            confirmPassword,
           }),
         }
       );
@@ -80,14 +92,17 @@ export default function RegisterPage() {
       );
 
       // Clear form
+      setCompanyName("");
       setName("");
       setEmail("");
+      setPhone("");
       setPassword("");
+      setConfirmPassword("");
 
       // Redirect to login
       setTimeout(() => {
         window.location.href = "/login";
-      }, 1500);
+      }, 3000);
 
     } catch (error) {
       console.error(
@@ -196,6 +211,34 @@ export default function RegisterPage() {
             className="mt-7 space-y-5"
           >
 
+          {/* COMPANY NAME */}
+
+<div>
+  <label className="mb-2 block text-sm font-semibold text-slate-700">
+    Company Name
+  </label>
+
+  <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+
+    <Wallet
+      size={18}
+      className="text-slate-400"
+    />
+
+    <input
+      type="text"
+      placeholder="Your business name"
+      value={CompanyName}
+      onChange={(e) =>
+        setCompanyName(e.target.value)
+      }
+      disabled={loading}
+      className="w-full bg-transparent text-sm outline-none disabled:cursor-not-allowed"
+    />
+
+  </div>
+</div>
+
             {/* NAME */}
 
             <div>
@@ -256,6 +299,23 @@ export default function RegisterPage() {
 
             </div>
 
+            {/* PHONE */}
+
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Phone Number (Kenyan)</label>
+              <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+                <Phone size={18} className="text-slate-400" />
+                <input
+                  type="tel"
+                  placeholder="0712345678"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={loading}
+                  className="w-full bg-transparent text-sm outline-none disabled:cursor-not-allowed"
+                />
+              </div>
+            </div>
+
             {/* PASSWORD */}
 
             <div>
@@ -308,6 +368,23 @@ export default function RegisterPage() {
                 Password must contain at least 6 characters.
               </p>
 
+            </div>
+
+            {/*  CONFIRM PASSWORD */}
+
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Confirm Password</label>
+              <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100">
+                <Lock size={18} className="text-slate-400" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={loading}
+                  className="w-full bg-transparent text-sm outline-none disabled:cursor-not-allowed"
+                />
+              </div>
             </div>
 
             {/* BUTTON */}
